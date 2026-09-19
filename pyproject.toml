@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transcript-app"
+version = "0.1.0"
+description = "VoxType -- hold a hotkey, speak, release, and it types for you."
+requires-python = ">=3.9"
+dependencies = [
+    "faster-whisper",
+    "sounddevice",
+    "numpy",
+    "pynput",
+    "pyperclip",
+]
+
+[project.scripts]
+voxtype = "transcript_app.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -15,8 +15,18 @@ dependencies = [
     "pyperclip",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+    "bandit",
+    "pip-audit",
+]
+
 [project.scripts]
 voxtype = "transcript_app.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

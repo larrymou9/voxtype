@@ -23,7 +23,10 @@ def _paste(text: str) -> None:
     try:
         previous_clipboard = pyperclip.paste()
     except Exception:
-        pass
+        # Reading the old clipboard is a courtesy (so we can restore it after),
+        # not a requirement - any failure here (e.g. non-text clipboard content)
+        # should never stop the dictated text itself from being pasted.
+        pass  # nosec B110
 
     pyperclip.copy(text)
     time.sleep(0.05)  # give macOS a moment to register the clipboard update

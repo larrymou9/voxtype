@@ -94,6 +94,19 @@ voxtype
 Hold the hotkey (Control+Option by default — see `config.py`), speak, let go.
 Watch the terminal — it prints what it heard, then pastes it.
 
+## Testing & security
+
+```bash
+pip install -e ".[dev]"
+pytest              # unit tests, incl. regression tests for real bugs found during development
+bandit -r src/transcript_app   # static security scan
+pip-audit                      # checks dependencies against known CVEs
+```
+
+All three run automatically on every push via GitHub Actions (`.github/workflows/ci.yml`).
+The test suite mocks the microphone, model, and hotkey listener — it doesn't need a
+real mic or macOS permissions to run, so it also works in CI.
+
 ## Current limitations (this is the dev version, not the product yet)
 
 - Hold-to-record only (no toggle mode yet)

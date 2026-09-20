@@ -144,8 +144,42 @@ Notes:
 - Model is downloaded on first launch, not bundled into the installer yet
 - First run downloads the whisper model (size depends on `MODEL_SIZE` in `config.py`)
 
-## Roadmap
+## TODO
 
-See the `voxtype-productization-plan.md` doc in Larry's Business project for the
-full path from here to a sellable product (packaging, code signing, settings UI,
-pricing, launch).
+### Immediate
+
+- [ ] Confirm the packaged `.app` actually works end-to-end (menu bar icon shows,
+      hotkey triggers, mic captures, text pastes) - it needs its **own** fresh
+      Accessibility / Input Monitoring / Microphone grants, separate from
+      whatever Python you built it with. Last thing tested before this was
+      interrupted by a machine restart.
+
+### Packaging & distribution
+
+- [ ] Decide: bundle the ~927MB model into the installer (works offline
+      immediately, big download) vs. download on first launch (small installer,
+      needs internet once) - currently downloads on first launch.
+- [ ] Apple Developer Program enrollment ($99/yr) for a real Developer ID.
+- [ ] Developer ID signing + notarization (removes the Gatekeeper warning on
+      other people's Macs - ad-hoc signing only gets you so far).
+- [ ] Build a `.dmg` installer.
+- [ ] Point the landing page's "Download VoxType" button at the real installer
+      instead of the GitHub source `.zip`.
+- [ ] Real app icon (currently unset).
+
+### Product
+
+- [ ] Settings UI - hotkey, model size, output mode are all hand-edited in
+      `config.py` right now.
+- [ ] Toggle-to-record mode, not just hold-to-record.
+
+### Monetization
+
+- [ ] Gumroad (or similar) product listing, ~$1-2 one-time purchase.
+- [ ] Simple license-key entry/check in the app.
+- [ ] Update the landing page CTA from free download to "Buy for $X".
+
+### Nice to have
+
+- [ ] Custom domain for the landing page (currently
+      `larrymou9.github.io/voxtype`).

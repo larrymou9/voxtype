@@ -1,0 +1,556 @@
+<title>VoxType</title>
+<style>
+  :root {
+    /* Ink & Signal - light: pale ink-tinted paper, dark ink text, amber "voice signal" accent */
+    --bg: #F1F1F5;
+    --surface: #E4E5EC;
+    --surface-border: #CBCDD8;
+    --text: #171A22;
+    --text-muted: #565A67;
+    --signal: #B87420;
+    --signal-fill: #E2A23E;
+    --signal-soft: rgba(226, 162, 62, 0.14);
+    --good: #3F7D52;
+    --bad: #A24B3E;
+    --radius-sm: 7px;
+    --radius-md: 16px;
+    --shadow-panel: 0 30px 60px -30px rgba(23, 26, 34, 0.35);
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12141C;
+      --surface: #1B202B;
+      --surface-border: #2C3242;
+      --text: #ECEDF2;
+      --text-muted: #9498A6;
+      --signal: #E9AC4C;
+      --signal-fill: #E2A23E;
+      --signal-soft: rgba(226, 162, 62, 0.16);
+      --good: #6FBF86;
+      --bad: #E08573;
+      --shadow-panel: 0 30px 70px -25px rgba(0, 0, 0, 0.6);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #12141C;
+    --surface: #1B202B;
+    --surface-border: #2C3242;
+    --text: #ECEDF2;
+    --text-muted: #9498A6;
+    --signal: #E9AC4C;
+    --signal-fill: #E2A23E;
+    --signal-soft: rgba(226, 162, 62, 0.16);
+    --good: #6FBF86;
+    --bad: #E08573;
+    --shadow-panel: 0 30px 70px -25px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    padding-inline: max(20px, calc((100% - 1120px) / 2));
+    line-height: 1.55;
+  }
+
+  a { color: inherit; }
+
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, 'Times New Roman', serif; text-wrap: balance; margin: 0; }
+
+  .mono {
+    font-family: 'IBM Plex Mono', 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--signal);
+  }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-block: 20px;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid transparent;
+  }
+  nav.scrolled { border-bottom-color: var(--surface-border); }
+
+  .wordmark {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wordmark::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--signal-fill);
+    box-shadow: 0 0 0 4px var(--signal-soft);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 11px 18px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--signal-fill);
+    color: #171308;
+  }
+  .btn-ghost {
+    border: 1px solid var(--surface-border);
+    color: var(--text);
+  }
+  .btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding-block: 56px 72px;
+    display: grid;
+    gap: 40px;
+  }
+  .hero-copy { max-width: 620px; }
+  .hero-copy .eyebrow { margin-bottom: 18px; display: block; }
+  .hero-copy h1 {
+    font-size: clamp(2.3rem, 5vw, 3.4rem);
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+  }
+  .hero-copy h1 em { font-style: italic; color: var(--signal); font-weight: 500; }
+  .hero-copy p.lede {
+    margin-top: 20px;
+    font-size: 1.08rem;
+    color: var(--text-muted);
+    max-width: 46ch;
+  }
+
+  .hero-actions {
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .hero-note { font-size: 0.8rem; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-panel);
+    padding: 22px 22px 18px;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: rise 0.7s 0.15s ease-out forwards;
+  }
+  @media (prefers-reduced-motion: reduce) { .panel { animation: none; opacity: 1; transform: none; } }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .rec-dot { display: inline-flex; align-items: center; gap: 6px; color: var(--signal); }
+  .rec-dot::before {
+    content: "";
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--signal-fill);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .rec-dot::before { animation: none; } }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  canvas#wave { width: 100%; height: 132px; display: block; }
+
+  .keys {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 16px;
+    border-top: 1px solid var(--surface-border);
+  }
+  .key {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem;
+    min-width: 40px;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    border: 1px solid var(--surface-border);
+    border-bottom-width: 3px;
+  }
+  .key-plus { color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+  .keys-label { margin-left: 10px; font-size: 0.78rem; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+
+  /* ---------- Sections ---------- */
+  section { padding-block: 64px; border-top: 1px solid var(--surface-border); }
+  .section-head { max-width: 560px; margin-bottom: 40px; }
+  .section-head h2 { font-size: clamp(1.5rem, 3vw, 1.9rem); font-weight: 500; margin-top: 10px; }
+  .section-head p { color: var(--text-muted); margin-top: 10px; }
+
+  /* Steps */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .step { position: relative; padding: 0 22px; }
+  .step:first-child { padding-left: 0; }
+  .step:last-child { padding-right: 0; }
+  .step::before {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: -22px;
+    right: 22px;
+    height: 1px;
+    background: var(--surface-border);
+  }
+  .step:first-child::before { display: none; }
+  .step-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--signal);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .step-num::before {
+    content: "";
+    width: 11px; height: 11px;
+    border: 2px solid var(--signal-fill);
+    border-radius: 50%;
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+  .step h3 { font-size: 1.15rem; font-weight: 500; margin-bottom: 8px; }
+  .step p { color: var(--text-muted); font-size: 0.94rem; max-width: 30ch; }
+
+  @media (max-width: 760px) {
+    .steps { grid-template-columns: 1fr; gap: 28px; }
+    .step { padding: 0; }
+    .step::before { display: none; }
+  }
+
+  /* Compare */
+  .compare {
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    align-items: center;
+  }
+  .compare-row + .compare-row { border-top: 1px solid var(--surface-border); }
+  .compare-row.head {
+    background: var(--surface);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .compare-row > div { padding: 16px 18px; }
+  .compare-row .label { color: var(--text-muted); font-size: 0.94rem; }
+  .compare-row .cloud { border-left: 1px solid var(--surface-border); }
+  .compare-row .vox { border-left: 1px solid var(--surface-border); font-weight: 500; }
+  .yes { color: var(--good); }
+  .no { color: var(--bad); }
+  .yes::before { content: "✓ "; }
+  .no::before { content: "— "; }
+
+  @media (max-width: 620px) {
+    .compare-row { grid-template-columns: 1fr; }
+    .compare-row .cloud, .compare-row .vox { border-left: none; border-top: 1px solid var(--surface-border); }
+    .compare-row.head { display: none; }
+  }
+
+  /* Specs strip */
+  .specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px 40px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+  }
+  .specs dt { color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .specs dd { margin: 0; }
+
+  /* Closing */
+  .closing { text-align: left; }
+  .closing h2 { font-size: clamp(1.7rem, 4vw, 2.3rem); font-weight: 500; max-width: 18ch; }
+  .closing-actions { margin-top: 26px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+  footer {
+    border-top: 1px solid var(--surface-border);
+    padding-block: 28px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  footer p { margin: 0; max-width: 46ch; }
+  footer a { text-decoration: underline; text-underline-offset: 3px; }
+</style>
+
+<nav id="nav">
+  <div class="wordmark">VoxType</div>
+  <a class="btn btn-ghost" href="https://github.com/larrymou9/voxtype" target="_blank" rel="noopener">View source</a>
+</nav>
+
+<main>
+  <section class="hero" style="border-top: none; padding-top: 8px;">
+    <div class="hero-copy">
+      <span class="eyebrow">Local voice dictation for macOS</span>
+      <h1>Hold a key. Speak. <em>It's typed.</em></h1>
+      <p class="lede">VoxType turns your voice into text wherever your cursor is — powered by an open-source speech model that runs entirely on your Mac. No cloud, no subscription, no account.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://github.com/larrymou9/voxtype" target="_blank" rel="noopener">Get VoxType →</a>
+        <span class="hero-note">Free · Open source · Apple Silicon</span>
+      </div>
+    </div>
+
+    <div class="panel" aria-hidden="true">
+      <div class="panel-head">
+        <span class="rec-dot">listening</span>
+        <span>16 kHz mono</span>
+      </div>
+      <canvas id="wave" width="1040" height="132"></canvas>
+      <div class="keys">
+        <span class="key">⌃</span>
+        <span class="key-plus">+</span>
+        <span class="key">⌥</span>
+        <span class="keys-label">hold to record · release to paste</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="section-head">
+      <span class="eyebrow">How it works</span>
+      <h2>Three steps, no windows to manage.</h2>
+      <p>VoxType has no interface to open. It waits for a key.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01 / HOLD</div>
+        <h3>Press ⌃⌥</h3>
+        <p>Anywhere — any app, any text field. VoxType is always listening for the hotkey, never for your voice.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02 / SPEAK</div>
+        <h3>Say it</h3>
+        <p>A local Whisper model transcribes as you go, entirely in memory. Nothing is written to disk.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03 / RELEASE</div>
+        <h3>It's there</h3>
+        <p>Let go of the keys. Your words appear right where your cursor was — no copy, no switch, no wait.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="local">
+    <div class="section-head">
+      <span class="eyebrow">Why local matters</span>
+      <h2>Most dictation apps mail your voice to a server. This one doesn't.</h2>
+      <p>Cloud dictation tools are convenient because someone else's GPU does the work — and charges you monthly for it. VoxType does the work on the machine already in front of you.</p>
+    </div>
+    <div class="compare">
+      <div class="compare-row head">
+        <div></div>
+        <div>Cloud dictation</div>
+        <div>VoxType</div>
+      </div>
+      <div class="compare-row">
+        <div class="label">Where it runs</div>
+        <div class="cloud">Their servers</div>
+        <div class="vox">Your Mac</div>
+      </div>
+      <div class="compare-row">
+        <div class="label">What they receive</div>
+        <div class="cloud">Your audio, your words</div>
+        <div class="vox">Nothing — it never leaves</div>
+      </div>
+      <div class="compare-row">
+        <div class="label">Works with Wi-Fi off</div>
+        <div class="cloud no">No</div>
+        <div class="vox yes">Yes</div>
+      </div>
+      <div class="compare-row">
+        <div class="label">Cost</div>
+        <div class="cloud">Monthly, scales with use</div>
+        <div class="vox">Free right now</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="specs">
+    <div class="section-head">
+      <span class="eyebrow">Under the hood</span>
+      <h2>The actual signal chain.</h2>
+    </div>
+    <dl class="specs">
+      <div><dt>Model</dt><dd>faster-whisper, small</dd></div>
+      <div><dt>Compute</dt><dd>int8, CPU</dd></div>
+      <div><dt>Sample rate</dt><dd>16 kHz mono</dd></div>
+      <div><dt>Default hotkey</dt><dd>⌃ + ⌥ (hold)</dd></div>
+      <div><dt>Platform</dt><dd>macOS, Apple Silicon</dd></div>
+      <div><dt>License</dt><dd>Open source</dd></div>
+    </dl>
+  </section>
+
+  <section class="closing">
+    <h2>Say it once. Skip the typing.</h2>
+    <div class="closing-actions">
+      <a class="btn btn-primary" href="https://github.com/larrymou9/voxtype" target="_blank" rel="noopener">Get VoxType →</a>
+      <span class="hero-note">Public build · in active development</span>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Not made by OpenAI. Built on Whisper, the speech model they open-sourced — VoxType just runs it locally instead of sending audio to anyone's API.</p>
+  <a href="https://github.com/larrymou9/voxtype" target="_blank" rel="noopener">github.com/larrymou9/voxtype</a>
+</footer>
+
+<script>
+  (function () {
+    var nav = document.getElementById('nav');
+    window.addEventListener('scroll', function () {
+      nav.classList.toggle('scrolled', window.scrollY > 4);
+    });
+
+    var canvas = document.getElementById('wave');
+    var ctx = canvas.getContext('2d');
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function dpr() { return Math.max(1, window.devicePixelRatio || 1); }
+
+    function resize() {
+      var rect = canvas.getBoundingClientRect();
+      var ratio = dpr();
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(132 * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    // Speech-shaped amplitude envelope: a few "word" bursts separated by pauses.
+    var bursts = [
+      { c: 0.10, w: 0.07, a: 0.55 },
+      { c: 0.24, w: 0.10, a: 0.95 },
+      { c: 0.41, w: 0.06, a: 0.4 },
+      { c: 0.55, w: 0.11, a: 0.85 },
+      { c: 0.70, w: 0.05, a: 0.5 },
+      { c: 0.82, w: 0.12, a: 1.0 }
+    ];
+    var LOOP = 2600;
+
+    function envelope(xNorm) {
+      var v = 0;
+      for (var i = 0; i < bursts.length; i++) {
+        var b = bursts[i];
+        var d = (xNorm - b.c) / b.w;
+        v += b.a * Math.exp(-d * d * 4);
+      }
+      return Math.min(1, v);
+    }
+
+    function draw(t) {
+      var rect = canvas.getBoundingClientRect();
+      var w = rect.width;
+      var h = 132;
+      ctx.clearRect(0, 0, w, h);
+
+      var mid = h / 2;
+      var style = getComputedStyle(document.documentElement);
+      var signal = style.getPropertyValue('--signal-fill').trim() || '#E2A23E';
+      var muted = style.getPropertyValue('--surface-border').trim() || '#888';
+
+      ctx.strokeStyle = muted;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, mid);
+      ctx.lineTo(w, mid);
+      ctx.stroke();
+
+      ctx.beginPath();
+      var step = 2;
+      for (var x = 0; x <= w; x += step) {
+        var pos = (x + t) % LOOP;
+        var xNorm = pos / LOOP;
+        var env = envelope(xNorm);
+        var carrier = Math.sin((x + t) * 0.18) * 0.6 + Math.sin((x + t) * 0.05) * 0.4;
+        var y = mid - carrier * env * (mid - 8);
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = signal;
+      ctx.lineWidth = 1.6;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    if (reduceMotion) {
+      draw(400);
+    } else {
+      var start = null;
+      function frame(ts) {
+        if (start === null) start = ts;
+        draw((ts - start) * 0.09);
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+  })();
+</script>

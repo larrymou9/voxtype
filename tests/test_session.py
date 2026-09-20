@@ -136,3 +136,23 @@ def test_release_before_any_press_does_nothing():
     session.on_release()
     assert session.last_worker is None
     send_text.assert_not_called()
+
+
+def test_state_changes_drive_the_menu_bar_icon_in_order():
+    transcriber = MagicMock()
+    transcriber.transcribe.return_value = "hi"
+    recorder = _fake_recorder("audio")
+    states = []
+
+    session = RecordingSession(
+        transcriber,
+        recorder_factory=lambda: recorder,
+        send_text_fn=MagicMock(),
+        max_duration=999,
+        on_state_change=states.append,
+    )
+    session.on_press()
+    session.on_release()
+    session.last_worker.join(timeout=2)
+
+    assert states == ["recording", "processing", "idle"]

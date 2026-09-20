@@ -13,6 +13,7 @@ dependencies = [
     "numpy",
     "pynput",
     "pyperclip",
+    "rumps",
 ]
 
 [project.optional-dependencies]

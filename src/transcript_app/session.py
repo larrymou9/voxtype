@@ -25,6 +25,7 @@ class RecordingSession:
         max_duration=config.MAX_RECORDING_SECONDS,
         stuck_warning_seconds=STUCK_WARNING_SECONDS,
         log=print,
+        on_state_change=lambda state: None,
     ):
         self._transcriber = transcriber
         self._recorder_factory = recorder_factory
@@ -32,6 +33,9 @@ class RecordingSession:
         self._max_duration = max_duration
         self._stuck_warning_seconds = stuck_warning_seconds
         self._log = log
+        # Called with "recording" / "processing" / "idle" - e.g. to drive a menu
+        # bar icon. Defaults to a no-op so this class needs no UI to be tested.
+        self._on_state_change = on_state_change
 
         # Guards against the real on_release AND the max-duration timer both
         # trying to finish the same recording (whichever fires first wins).
@@ -44,6 +48,7 @@ class RecordingSession:
 
     def on_press(self):
         self._log("[voxtype] recording...")
+        self._on_state_change("recording")
         recorder = self._recorder_factory()  # fresh instance per hold - avoids clashing with a stuck previous one
         recorder.start()
         with self._lock:
@@ -75,6 +80,7 @@ class RecordingSession:
         threading.Thread(target=self._watchdog, args=(worker,), daemon=True).start()
 
     def _process(self, recorder, reason):
+        self._on_state_change("processing")
         self._log(f"[voxtype] transcribing...{reason}")
         audio = recorder.stop()
         text = self._transcriber.transcribe(audio)
@@ -83,6 +89,7 @@ class RecordingSession:
             self._send_text(text)
         else:
             self._log("[voxtype] (heard nothing)")
+        self._on_state_change("idle")
 
     def _watchdog(self, worker):
         worker.join(timeout=self._stuck_warning_seconds)

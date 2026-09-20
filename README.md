@@ -107,12 +107,41 @@ All three run automatically on every push via GitHub Actions (`.github/workflows
 The test suite mocks the microphone, model, and hotkey listener — it doesn't need a
 real mic or macOS permissions to run, so it also works in CI.
 
+## Packaging a real .app
+
+```bash
+pip install -e ".[build]"
+pyinstaller voxtype.spec --noconfirm
+open dist/VoxType.app
+```
+
+Notes:
+
+- `entry_point.py` exists only because PyInstaller runs its entry script standalone,
+  and `transcript_app/__main__.py`'s relative import doesn't work in that context.
+- This produces an **ad-hoc signed** app — it runs, but macOS Gatekeeper will still
+  warn on first launch on someone else's Mac (right-click > Open gets past it). A
+  real Apple Developer ID + notarization is needed before distributing this to
+  people who aren't you.
+- The packaged app is its own bundle (`com.voxtype.app`), separate from whatever
+  Python you built it with — it needs its **own** Accessibility / Input Monitoring /
+  Microphone grants in System Settings the first time it runs, same dance as the
+  README's permissions section above, just for a different app in the list.
+- If code signing fails with a "resource fork, Finder information, or similar
+  detritus not allowed" error, and this project lives inside an iCloud-synced
+  folder, run `xattr -cr dist/VoxType.app` and re-sign - same root cause as the
+  hidden-`.pth`-file issue above.
+- `build/` and `dist/` are gitignored — they're regenerated from `voxtype.spec`,
+  never commit them.
+
 ## Current limitations (this is the dev version, not the product yet)
 
 - Hold-to-record only (no toggle mode yet)
 - Hotkey is set in `config.py`, no in-app way to change it yet
 - No settings UI — everything is edited in `config.py`
-- Not packaged as a real .app yet — this is scaffolding to develop and test the core loop
+- Packaged build is ad-hoc signed only — no Developer ID signing/notarization yet,
+  so Gatekeeper will warn on another Mac
+- Model is downloaded on first launch, not bundled into the installer yet
 - First run downloads the whisper model (size depends on `MODEL_SIZE` in `config.py`)
 
 ## Roadmap

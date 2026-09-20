@@ -22,6 +22,9 @@ dev = [
     "bandit",
     "pip-audit",
 ]
+build = [
+    "pyinstaller",
+]
 
 [project.scripts]
 voxtype = "transcript_app.app:main"

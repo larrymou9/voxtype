@@ -13,7 +13,8 @@ dependencies = [
     "numpy",
     "pynput",
     "pyperclip",
-    "rumps",
+    "rumps; sys_platform == 'darwin'",
+    "pyobjc-framework-AVFoundation; sys_platform == 'darwin'",
 ]
 
 [project.optional-dependencies]

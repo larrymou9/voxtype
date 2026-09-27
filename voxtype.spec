@@ -16,6 +16,8 @@ for pkg in ["ctranslate2", "faster_whisper", "tokenizers", "huggingface_hub"]:
 hiddenimports += [
     "pynput.keyboard._darwin",
     "pynput.mouse._darwin",
+    "ApplicationServices",
+    "AVFoundation",
 ]
 
 a = Analysis(

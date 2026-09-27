@@ -10,7 +10,19 @@ Covers two real incidents from 2026-09-19:
 import time
 from unittest.mock import MagicMock
 
+import numpy as np
+
 from transcript_app.session import RecordingSession
+
+
+def _audio(peak=0.5, n=8):
+    """A minimal real audio array - session.py inspects .size and does
+    abs(audio).max() on whatever recorder.stop() returns, so tests need
+    something numpy-array-like, not a bare string."""
+    arr = np.zeros(n, dtype="float32")
+    if n:
+        arr[0] = peak
+    return arr
 
 
 def _fake_recorder(audio_return, stop_side_effect=None):
@@ -24,7 +36,8 @@ def _fake_recorder(audio_return, stop_side_effect=None):
 def test_full_cycle_records_transcribes_and_pastes():
     transcriber = MagicMock()
     transcriber.transcribe.return_value = "hello world"
-    recorder = _fake_recorder("some-audio")
+    audio = _audio()
+    recorder = _fake_recorder(audio)
     send_text = MagicMock()
 
     session = RecordingSession(
@@ -37,14 +50,15 @@ def test_full_cycle_records_transcribes_and_pastes():
     session.last_worker.join(timeout=2)
 
     recorder.stop.assert_called_once()
-    transcriber.transcribe.assert_called_once_with("some-audio")
+    transcriber.transcribe.assert_called_once()
+    assert transcriber.transcribe.call_args.args[0] is audio
     send_text.assert_called_once_with("hello world")
 
 
 def test_empty_transcription_is_not_pasted():
     transcriber = MagicMock()
     transcriber.transcribe.return_value = ""
-    recorder = _fake_recorder("silence")
+    recorder = _fake_recorder(_audio(peak=0.0))
     send_text = MagicMock()
 
     session = RecordingSession(
@@ -62,7 +76,7 @@ def test_double_finish_only_processes_once():
     calling finish() for the same hold must not double-process it."""
     transcriber = MagicMock()
     transcriber.transcribe.return_value = "hi"
-    recorder = _fake_recorder("audio")
+    recorder = _fake_recorder(_audio())
     send_text = MagicMock()
 
     session = RecordingSession(
@@ -85,8 +99,9 @@ def test_a_stuck_recording_does_not_block_the_next_one():
     transcriber = MagicMock()
     transcriber.transcribe.return_value = "second"
 
-    stuck_recorder = _fake_recorder("never-returned", stop_side_effect=lambda: time.sleep(5))
-    fast_recorder = _fake_recorder("fast-audio")
+    fast_audio = _audio(peak=0.3)
+    stuck_recorder = _fake_recorder(_audio(), stop_side_effect=lambda: time.sleep(5))
+    fast_recorder = _fake_recorder(fast_audio)
     recorders = iter([stuck_recorder, fast_recorder])
 
     send_text = MagicMock()
@@ -105,14 +120,15 @@ def test_a_stuck_recording_does_not_block_the_next_one():
     session.on_release()
     session.last_worker.join(timeout=2)
 
-    transcriber.transcribe.assert_called_once_with("fast-audio")
+    transcriber.transcribe.assert_called_once()
+    assert transcriber.transcribe.call_args.args[0] is fast_audio
     send_text.assert_called_once_with("second")
 
 
 def test_max_duration_timer_auto_finishes_a_long_hold():
     transcriber = MagicMock()
     transcriber.transcribe.return_value = "auto stopped"
-    recorder = _fake_recorder("long-audio")
+    recorder = _fake_recorder(_audio())
     send_text = MagicMock()
 
     session = RecordingSession(
@@ -141,7 +157,7 @@ def test_release_before_any_press_does_nothing():
 def test_state_changes_drive_the_menu_bar_icon_in_order():
     transcriber = MagicMock()
     transcriber.transcribe.return_value = "hi"
-    recorder = _fake_recorder("audio")
+    recorder = _fake_recorder(_audio())
     states = []
 
     session = RecordingSession(

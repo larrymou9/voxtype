@@ -1,13 +1,23 @@
-"""Tests for hotkey.py, including a regression test for the canonical-key
-mismatch bug found on 2026-09-19: pynput's Listener.canonical() can remap a
-key (e.g. Key.space) to a different object than the one HOTKEY resolves to,
-so a combo built from raw resolved keys silently never matched a real key
-event. Only pure-modifier combos worked by coincidence."""
+"""Tests for hotkey.py, including regression tests for two real bugs:
+
+  1. (2026-09-19) pynput's Listener.canonical() can remap a key (e.g.
+     Key.space) to a different object than the one HOTKEY resolves to, so a
+     combo built from raw resolved keys silently never matched a real key
+     event. Only pure-modifier combos worked by coincidence.
+
+  2. (2026-09-27) pynput's macOS backend hard-crashes the whole process if it
+     sees an NSSystemDefined event (which includes certain Caps Lock
+     transitions) - NSEvent.eventWithCGEvent_ trips a dispatch_assert_queue_fail
+     off pynput's background listener thread. Confirmed via a real crash
+     report; not a catchable Python exception. hotkey.py patches this away on
+     import since we never need media-key handling.
+"""
 from unittest.mock import MagicMock, patch
 
 import pytest
 from pynput import keyboard
 
+import pynput.keyboard._darwin as _darwin
 from transcript_app.hotkey import HotkeyListener, _resolve_key, resolve_hotkey_combo
 
 
@@ -95,3 +105,18 @@ def test_release_of_unrelated_key_does_not_fire():
 
     listener._handle_release(keyboard.Key.shift)
     listener._on_release.assert_not_called()
+
+
+def test_nssystemdefined_events_never_reach_the_crashing_nsevent_call():
+    """Regression test for the 2026-09-27 crash: NSSystemDefined events (some
+    Caps Lock transitions included) must never reach NSEvent.eventWithCGEvent_,
+    since that call reliably crashed the packaged app off pynput's background
+    listener thread."""
+    with patch.object(_darwin, "NSEvent") as mock_nsevent, patch.object(
+        _darwin, "CGEventGetFlags", return_value=0
+    ):
+        fake_listener = MagicMock()
+        _darwin.Listener._handle_message(
+            fake_listener, None, _darwin.NSSystemDefined, MagicMock(), None, False
+        )
+        mock_nsevent.eventWithCGEvent_.assert_not_called()

@@ -94,6 +94,44 @@ voxtype
 Hold the hotkey (Control+Option by default — see `config.py`), speak, let go.
 Watch the terminal — it prints what it heard, then pastes it.
 
+## Linux (experimental, headless only)
+
+VoxType was built and tested on macOS first; Linux support is new and has **not
+been tested on real Linux hardware** — the changes below were written to be
+correct, but only verified by reading the code, not by running it. If
+something's broken, that's expected until someone actually runs it on Linux
+and reports back.
+
+What's different from macOS:
+
+- **No menu bar icon.** `rumps` (the menu bar library) is macOS-only, so on
+  Linux VoxType just runs as a plain terminal process — same as the very
+  first version of this app, before the menu bar was added. Hold the hotkey,
+  watch the terminal, same as above.
+- **No permission prompts.** macOS's Accessibility/Input Monitoring/Microphone
+  dance (see above) doesn't exist on Linux - `permissions.py` no-ops there.
+- **Paste uses Ctrl+V**, not Cmd+V (handled automatically).
+
+Setup:
+
+```bash
+# Debian/Ubuntu:
+sudo apt install portaudio19-dev
+# Fedora:
+sudo dnf install portaudio-devel
+
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+voxtype
+```
+
+**If the hotkey does nothing on Fedora specifically:** Fedora Workstation
+defaults to Wayland, and most Wayland compositors block the kind of global
+keyboard listening `pynput` needs (deliberately, for security). Log out and
+choose **"GNOME on Xorg"** at the login screen instead - pynput's global
+hotkey support requires X11.
+
 ## Testing & security
 
 ```bash
@@ -143,6 +181,8 @@ Notes:
   so Gatekeeper will warn on another Mac
 - Model is downloaded on first launch, not bundled into the installer yet
 - First run downloads the whisper model (size depends on `MODEL_SIZE` in `config.py`)
+- Linux support is untested on real hardware (see the Linux section above) and
+  headless-only - no menu bar, no packaged installer
 
 ## TODO
 
@@ -178,6 +218,16 @@ Notes:
 - [ ] Gumroad (or similar) product listing, ~$1-2 one-time purchase.
 - [ ] Simple license-key entry/check in the app.
 - [ ] Update the landing page CTA from free download to "Buy for $X".
+
+### Linux
+
+- [ ] Actually test on a real Linux machine (Fedora/Xorg first, since that's
+      what prompted this) - the current support is written defensively but
+      unverified.
+- [ ] If there's real demand: a proper Linux tray icon (pystray or
+      AppIndicator3) instead of headless-only.
+- [ ] A Linux build/packaging path (PyInstaller supports Linux, but
+      `voxtype.spec`'s `BUNDLE()`/Info.plist steps are macOS-specific).
 
 ### Nice to have
 

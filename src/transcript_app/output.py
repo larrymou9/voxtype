@@ -1,4 +1,5 @@
 """Sends transcribed text wherever the user's cursor currently is."""
+import sys
 import time
 
 import pyperclip
@@ -7,6 +8,10 @@ from pynput.keyboard import Controller, Key
 from . import config
 
 _keyboard = Controller()
+
+# Paste is Cmd+V on macOS, Ctrl+V everywhere else (Linux, and Windows if ever
+# supported).
+_PASTE_MODIFIER = Key.cmd if sys.platform == "darwin" else Key.ctrl
 
 
 def send_text(text: str) -> None:
@@ -31,7 +36,7 @@ def _paste(text: str) -> None:
     pyperclip.copy(text)
     time.sleep(0.05)  # give macOS a moment to register the clipboard update
 
-    with _keyboard.pressed(Key.cmd):
+    with _keyboard.pressed(_PASTE_MODIFIER):
         _keyboard.press("v")
         _keyboard.release("v")
 

@@ -83,6 +83,13 @@ class RecordingSession:
         self._on_state_change("processing")
         self._log(f"[voxtype] transcribing...{reason}")
         audio = recorder.stop()
+        peak = float(abs(audio).max()) if audio.size else 0.0
+        self._log(f"[voxtype] captured {audio.size} samples, peak amplitude {peak:.5f}")
+        if audio.size and peak == 0.0:
+            self._log(
+                "[voxtype] audio is exactly silent - this usually means microphone "
+                "access isn't actually granted, not that you spoke too quietly"
+            )
         text = self._transcriber.transcribe(audio)
         if text:
             self._log(f"[voxtype] -> {text}")

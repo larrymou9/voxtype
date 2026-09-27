@@ -14,8 +14,10 @@
 HOTKEY = "ctrl+alt"
 
 # faster-whisper model size: tiny, base, small, medium, large-v3
-# Bigger = more accurate, slower, more RAM. "small" is a reasonable starting point on Apple Silicon.
-MODEL_SIZE = "small"
+# Bigger = more accurate, slower, more RAM. "small" is a reasonable starting point
+# on Apple Silicon (measured ~1.5s release-to-paste latency); "medium" trades
+# ~0.7s more latency (measured ~2.2s) for noticeably better accuracy.
+MODEL_SIZE = "medium"
 
 # Compute type for faster-whisper. "int8" is fastest on CPU and a good default.
 COMPUTE_TYPE = "int8"

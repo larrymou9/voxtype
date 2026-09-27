@@ -15,7 +15,12 @@ _TITLES = {
 class VoxTypeApp(rumps.App):
     def __init__(self):
         super().__init__("VoxType", title=_TITLES["idle"], quit_button="Quit VoxType")
-        self.menu = [f"Hold {config.HOTKEY.upper()} anywhere to dictate"]
+        self.menu = [
+            f"Hold {config.HOTKEY.upper()} anywhere to dictate",
+            rumps.separator,
+            f"Model: faster-whisper {config.MODEL_SIZE} ({config.COMPUTE_TYPE})",
+            "Runs 100% locally - nothing is ever sent anywhere",
+        ]
 
     def set_state(self, state: str) -> None:
         # on_state_change fires from the session's worker thread, but AppKit

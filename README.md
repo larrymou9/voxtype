@@ -3,6 +3,16 @@
 Hold a hotkey, speak, release it, and the transcription gets pasted wherever your cursor is.
 Runs fully locally (faster-whisper) — audio never leaves your Mac.
 
+**Network use, precisely:** the very first run on a machine downloads the model
+weights once (a few hundred MB to ~1GB depending on `MODEL_SIZE`, from Hugging
+Face's CDN). After that, `Transcriber` loads with `local_files_only=True` and
+makes **zero** network connections - verified with `lsof -i` while it starts up
+(by default, `huggingface_hub` still opens a connection to check for model
+updates on every load even when nothing needs downloading; this app
+deliberately skips that). No audio, transcript, or any other data is ever
+sent anywhere, at any point - the only outbound traffic that can ever happen
+is that one-time model download.
+
 ## Setup
 
 ```bash

@@ -104,6 +104,27 @@ voxtype
 Hold the hotkey (Control+Option by default — see `config.py`), speak, let go.
 Watch the terminal — it prints what it heard, then pastes it.
 
+## Latency and streaming transcription
+
+Release-to-paste latency depends on both `MODEL_SIZE` and how long you talked
+(measured on an M1 Max): `small` ≈1.5s for a short sentence, `medium` ≈2.2s.
+For a much longer dictation, that wait scales up with duration since the
+whole recording gets transcribed at once, from scratch, only after you
+release.
+
+`config.py`'s `PARTIAL_TRANSCRIBE_INTERVAL` is a real, tested, **experimental
+and off-by-default** attempt at fixing that: while the hotkey is held, it
+periodically re-transcribes everything captured so far in the background, so
+only the small new tail needs transcribing on release. It's off by default
+because it measurably made the common case *worse*, not better - see the
+detailed comment above `PARTIAL_TRANSCRIBE_INTERVAL` in `config.py` for the
+real numbers and why (short version: it only pays off once a periodic
+check's own transcribe time is comfortably faster than real-time speech,
+which `medium` isn't, quite). It helped clearly on a ~23s dictation and
+marginally on `small` at typical length; feel free to try enabling it if
+you switch to a smaller model, but re-measure your own typical dictation
+length before trusting it.
+
 ## Linux (experimental, headless only)
 
 VoxType was built and tested on macOS first; Linux support is new and has **not
@@ -222,6 +243,14 @@ Notes:
 - [ ] Settings UI - hotkey, model size, output mode are all hand-edited in
       `config.py` right now.
 - [ ] Toggle-to-record mode, not just hold-to-record.
+- [ ] Make streaming transcription (`PARTIAL_TRANSCRIBE_INTERVAL`) an actual
+      net win regardless of model choice: use a small/fast model for the
+      periodic background checks specifically, decoupled from whichever
+      (possibly slower, more accurate) model does the final tail. That's what
+      would let periodic checks reliably stay ahead of real-time speech,
+      which is the real blocker right now (see the config.py comment above
+      that setting for the measured numbers on why the current naive
+      same-model approach is off by default).
 
 ### Monetization
 

@@ -37,3 +37,33 @@ LANGUAGE = None
 # recording auto-stops and transcribes what it has so far instead of hanging
 # indefinitely and blocking the app from responding to anything else.
 MAX_RECORDING_SECONDS = 300
+
+# EXPERIMENTAL, off by default - read this before turning it on.
+#
+# While the hotkey is held, re-transcribe everything captured so far every
+# this-many seconds, in the background. On release, only the new audio since
+# the last check needs transcribing, instead of the whole recording.
+#
+# Measured 2026-09-27 on an M1 Max, real mic input, same ~8.5s test clip:
+#   MODEL_SIZE=medium:  no streaming 6.09s  vs  streaming (interval=2.0) 7.34s  -> WORSE
+#   MODEL_SIZE=small:   no streaming 7.01s  vs  streaming (interval=2.0) 6.50s  -> slightly better
+#   MODEL_SIZE=medium, a much longer ~23.5s clip: no streaming 10.78s vs streaming 7.18s -> clearly better
+#
+# The naive approach here (re-transcribe the whole growing buffer each
+# check) only pays off once a periodic check's own transcribe time is
+# comfortably faster than real-time speech. "medium" is only marginally
+# faster than real-time for this, so checks can't get far enough ahead, and
+# the redundant re-work makes typical-length holds slower, not faster - a
+# real regression, not just "no benefit." Only "large-v3" is slower still,
+# so the safe default is off. If you set MODEL_SIZE to "small"/"base"/"tiny"
+# you can reasonably try enabling this (e.g. 2.0); re-measure your own
+# typical dictation length before trusting it, using the same before/after
+# method as above.
+#
+# The actual fix - a fast, separate "draft" model for periodic checks,
+# decoupled from whichever accurate model does the final tail - is real
+# future work, not implemented here. See README's TODO.
+#
+# Set to 0 (or None) to disable, and always transcribe the whole recording
+# at once on release (the default, and the only behavior tested with medium).
+PARTIAL_TRANSCRIBE_INTERVAL = 0
